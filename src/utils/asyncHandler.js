@@ -1,7 +1,9 @@
-//Hiher order function
+//Higher order function
 const asyncHandler = (requestHandler) => {
   return (req, res, next) => {
-    Promise.resolve(requestHandler(req, res, next)).catch(() => next(error));
+    Promise.resolve(requestHandler(req, res, next)).catch((error) =>
+      next(error)
+    );
   };
 };
 

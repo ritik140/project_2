@@ -42,7 +42,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "password is Required"],
     },
-    refereshToken: {
+    refreshToken: {
       type: String,
     },
   },
@@ -60,7 +60,7 @@ userSchema.pre("save", async function (next) {
 
 //This is comparing the password of the userInput and bycrpted password
 userSchema.methods.isPasswordCorrect = async function (password) {
-  bcrypt.compare(password, this.password);
+  await bcrypt.compare(password, this.password);
 };
 
 //this is to generate the jwt token 

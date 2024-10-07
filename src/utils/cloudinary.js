@@ -1,3 +1,4 @@
+// Upload the file/Image on Third-party application 
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs"; //File System (it helps in read write the file)
 
