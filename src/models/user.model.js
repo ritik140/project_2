@@ -57,10 +57,13 @@ userSchema.pre("save", async function (next) {
   }
   return;
 });
+
 //This is comparing the password of the userInput and bycrpted password
 userSchema.methods.isPasswordCorrect = async function (password) {
   bcrypt.compare(password, this.password);
 };
+
+//this is to generate the jwt token 
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {
