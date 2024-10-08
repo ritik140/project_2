@@ -51,19 +51,18 @@ const userSchema = new mongoose.Schema(
 // Middleware which is bcrypt the password
 userSchema.pre("save", async function (next) {
   // IF PASSWORD FIELD IS MODIFY
-  if (this.isModified("password")) {
-    this.password = bcrypt.hash(this.password, 10);
-    next();
-  }
+  if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
   return;
 });
 
 //This is comparing the password of the userInput and bycrpted password
 userSchema.methods.isPasswordCorrect = async function (password) {
-  await bcrypt.compare(password, this.password);
+  return await bcrypt.compare(password, this.password);
 };
 
-//this is to generate the jwt token 
+//this is to generate the jwt token
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {
@@ -72,7 +71,7 @@ userSchema.methods.generateAccessToken = function () {
       username: this.username,
       fullName: this.fullName,
     },
-    process.env.ACESS_TOKEN_SECRET,
+    process.env.ACCESS_TOKEN_SECRET,
     {
       expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
     }
@@ -83,7 +82,7 @@ userSchema.methods.generateRefreshToken = function () {
     {
       _id: this._id,
     },
-    process.env.REFERSH_TOKEN_SECRET,
+    process.env.REFRESH_TOKEN_SECRET,
     {
       expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
     }
