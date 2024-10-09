@@ -1,4 +1,4 @@
-// Upload the file/Image on Third-party application 
+// Upload the file/Image on Third-party application
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs"; //File System (it helps in read write the file)
 
@@ -17,7 +17,7 @@ const uploadOnCloudinary = async (localFilePath) => {
     const response = await cloudinary.uploader.upload(localFilePath, {
       resource_type: "auto",
     });
-    console.log(response);
+    console.log("cloudinary---->", response);
     return response;
   } catch (error) {
     fs.unlinkSync(localFilePath); //To remove from the save local file when the operation get failed
