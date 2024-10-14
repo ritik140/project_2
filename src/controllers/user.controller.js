@@ -1,9 +1,10 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
+import { Tweets } from "../models/tweets.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken";
 
 const generateAccessandRefreshToken = async (userId) => {
@@ -52,9 +53,9 @@ const registerUser = asyncHandler(async (req, res) => {
   if (existedUser) {
     throw new ApiError(409, "User with email or username already exists");
   }
-  //console.log(req.files);
+  // console.log(req);
 
-  const avatarLocalPath = req.files?.avatar[0]?.path;
+  const avatarLocalPath = await req.files?.avatar[0]?.path;
   //const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
   let coverImageLocalPath;
@@ -110,7 +111,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
-  console.log(req.body);
+  // console.log(req.body);
 
   if (!(email || username)) {
     throw new ApiError(400, "Email or User is Required");
@@ -164,7 +165,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     userId,
     {
       $set: {
-        refreshToken: undefined,
+        refreshToken: 1, //This remove the field from document
       },
     },
     {
@@ -251,7 +252,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
   if (!(fullName || username || email)) {
     throw new ApiError(400, "Fields are required");
   }
-  const user = User.findByIdAndUpdate(
+  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
@@ -304,18 +305,20 @@ const fileUploadCoverImage = asyncHandler(async (req, res) => {
   }
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
   if (!coverImage.url) {
-    throw new ApiError(400, "CoverImage is not find");
+    throw new ApiError(400, "CoverImage is not found");
   }
 
-  const user = User.findByIdAndUpdate(
+  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
-        converImage: coverImage.url,
+        coverImage: coverImage.url,
       },
     },
     { new: true }
   ).select("-password");
+
+  console.log(user);
 
   return res
     .status(200)
@@ -383,11 +386,17 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   }
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "CoverImage Updated Successfully"));
+    .json(
+      new ApiResponse(
+        200,
+        username,
+        "getUserChannelProfile is done successfully"
+      )
+    );
 });
 
 const getWatchHistory = asyncHandler(async (req, res) => {
-  const user = await User.aggregate(
+  const user = await User.aggregate([
     {
       $match: {
         _id: new mongoose.Types.ObjectId(req.user?._id),
@@ -406,33 +415,57 @@ const getWatchHistory = asyncHandler(async (req, res) => {
               localField: "owner",
               foreignField: "_id",
               as: "owner",
-              pipeline:[
+              pipeline: [
                 {
-                  $project:{
-                    fullName:1,
-                    username:1,
-                    avatar:1
-                  }
-                }
-              ]
+                  $project: {
+                    fullName: 1,
+                    username: 1,
+                    avatar: 1,
+                  },
+                },
+              ],
             },
           },
           {
-            $addFields:{
-              owner:{
-                $first:"$owner"
-              }
-            }
-          }
+            $addFields: {
+              owner: {
+                $first: "$owner",
+              },
+            },
+          },
         ],
       },
-    }
-  );
+    },
+  ]);
   return res
-  .status(200)
-  .json(
-    new ApiResponse(200, user[0].watchHistory,"watch history fetch successfully")
-  )
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        user[0].watchHistory,
+        "watch history fetch successfully"
+      )
+    );
+});
+
+const tweetContent = asyncHandler(async (req, res) => {
+  const content = req.body;
+  const user = User.findById(req.user?._id);
+  if (!user) {
+    throw new ApiError(400, "User Not Found!");
+  }
+  if (!content) {
+    throw new ApiError(400, "Content Not found");
+  }
+  const contentSaved = await Tweets.create({
+    content,
+    user,
+  });
+  const contentShown = Tweets.findById(contentSaved?._id).select("-user");
+  if (!contentShown) {
+    throw new ApiError(400, "Not able to save the content");
+  }
+  return res.status(200).json(new ApiResponse(200, "Content Saved"));
 });
 export {
   registerUser,
@@ -445,5 +478,5 @@ export {
   fileUploadAvatar,
   fileUploadCoverImage,
   getUserChannelProfile,
-  getWatchHistory
+  getWatchHistory,
 };

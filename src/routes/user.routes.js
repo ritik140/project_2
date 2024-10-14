@@ -36,14 +36,14 @@ router.route("/login").post(loginUser);
 router.route("/logout").post(verifyJwt, logoutUser);
 router.route("/refreshToken").post(refreshAccessToken);
 router.route("/change-password").post(verifyJwt, resetPassword);
-router.route("/current-user").post(verifyJwt, getCurrentUser);
+router.route("/current-user").get(verifyJwt, getCurrentUser);
 router.route("/update-account").patch(verifyJwt, updateAccountDetails);
 router
   .route("/avatar-update")
-  .patch(verifyJwt, upload.single("/avatar"), fileUploadAvatar);
+  .patch(verifyJwt, upload.single("avatar"), fileUploadAvatar);
 router
   .route("/cover-image-update")
-  .patch(verifyJwt, upload.single("/coverImage"), fileUploadCoverImage);
+  .patch(verifyJwt, upload.single("coverImage"), fileUploadCoverImage);
 
 router.route("/c/:username").get(verifyJwt, getUserChannelProfile);
 
