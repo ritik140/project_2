@@ -53,7 +53,8 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(409, "User with email or username already exists");
   }
   // console.log(req);
-
+  
+//Multer give the access of req.files
   const avatarLocalPath = await req.files?.avatar[0]?.path;
   //const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
